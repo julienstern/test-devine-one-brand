@@ -99,6 +99,11 @@
             transform: translateY(0);
         }
 
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         .predictions-section {
             margin-top: 30px;
             text-align: left;
@@ -141,14 +146,8 @@
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .prediction-name {
@@ -178,25 +177,9 @@
             text-align: center;
         }
 
-        .clear-btn {
-            background: #ff6b6b;
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 14px;
-        }
-
-        .clear-btn:hover {
-            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
-        }
-
         @media (max-width: 500px) {
-            .card {
-                padding: 25px;
-            }
-            
-            h1 {
-                font-size: 1.4em;
-            }
+            .card { padding: 25px; }
+            h1 { font-size: 1.4em; }
         }
     </style>
 </head>
@@ -214,7 +197,7 @@
             <div class="input-group">
                 <input type="text" id="authorInput" placeholder="Ton prénom">
                 <input type="text" id="predictionInput" placeholder="Ta proposition de nom">
-                <button onclick="submitPrediction()">🎯 Valider mon pronostic</button>
+                <button id="submitBtn" onclick="submitPrediction()">🎯 Valider mon pronostic</button>
             </div>
 
             <div class="predictions-section">
@@ -223,32 +206,35 @@
                     <span class="count-badge" id="countBadge">0 pronostic</span>
                 </div>
                 <div class="predictions-list" id="predictionsList">
-                    <div class="empty-state">Aucun pronostic pour le moment. Sois le premier ! 🚀</div>
+                    <div class="empty-state">Chargement des pronostics... 🚀</div>
                 </div>
             </div>
-
-            <button class="clear-btn" onclick="clearAll()">🗑️ Réinitialiser</button>
         </div>
     </div>
 
     <script>
-        // Date de l'annonce : mardi 26 mai 2026
+        // Configuration
         const revealDate = new Date('2026-05-26T09:00:00');
+        const API_URL = 'https://sheetdb.io/api/v1/6hurky9ti2e3z';
 
-        // Charger les pronostics depuis localStorage
-        function loadPredictions() {
-            const stored = localStorage.getItem('zeplug_predictions');
-            return stored ? JSON.parse(stored) : [];
+        // Charger les pronostics depuis Google Sheets
+        async function loadPredictions() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                // SheetDB renvoie un tableau d'objets. 
+                // On inverse pour avoir les derniers ajouts en haut de liste.
+                renderPredictions(data.reverse());
+            } catch (error) {
+                console.error("Erreur lors du chargement:", error);
+                document.getElementById('predictionsList').innerHTML = 
+                    '<div class="empty-state">Erreur de connexion à la base de données.</div>';
+            }
         }
 
-        // Sauvegarder les pronostics
-        function savePredictions(predictions) {
-            localStorage.setItem('zeplug_predictions', JSON.stringify(predictions));
-        }
-
-        // Afficher les pronostics
-        function renderPredictions() {
-            const predictions = loadPredictions();
+        // Afficher les pronostics dans l'interface
+        function renderPredictions(predictions) {
             const list = document.getElementById('predictionsList');
             const badge = document.getElementById('countBadge');
 
@@ -264,70 +250,77 @@
                     <span class="prediction-name">${escapeHtml(p.name)}</span>
                     <div class="prediction-meta">
                         <div class="prediction-author">${escapeHtml(p.author)}</div>
-                        <div class="prediction-time">${p.time}</div>
+                        <div class="prediction-time">${p.time || ''}</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Échapper le HTML pour éviter les injections
+        // Échapper le HTML pour la sécurité
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Soumettre un pronostic
-        function submitPrediction() {
+        // Soumettre un pronostic à Google Sheets
+        async function submitPrediction() {
             const authorInput = document.getElementById('authorInput');
             const predictionInput = document.getElementById('predictionInput');
+            const btn = document.getElementById('submitBtn');
 
             const author = authorInput.value.trim();
             const name = predictionInput.value.trim();
 
-            if (!author) {
-                alert('Entre ton prénom !');
-                authorInput.focus();
+            if (!author || !name) {
+                alert('Merci de remplir ton prénom et ta proposition !');
                 return;
             }
 
-            if (!name) {
-                alert('Entre ta proposition de nom !');
-                predictionInput.focus();
-                return;
-            }
+            // Désactiver le bouton pendant l'envoi
+            btn.disabled = true;
+            btn.textContent = '⏳ Envoi en cours...';
 
-            const predictions = loadPredictions();
-            
-            predictions.unshift({
-                author: author,
-                name: name,
-                time: new Date().toLocaleString('fr-FR', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })
+            const time = new Date().toLocaleString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
             });
 
-            savePredictions(predictions);
-            renderPredictions();
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: [
+                            {
+                                author: author,
+                                name: name,
+                                time: time
+                            }
+                        ]
+                    })
+                });
 
-            predictionInput.value = '';
-            
-            // Petit feedback visuel
-            const btn = document.querySelector('button');
-            btn.textContent = '✅ Ajouté !';
-            setTimeout(() => {
-                btn.textContent = '🎯 Valider mon pronostic';
-            }, 1500);
-        }
-
-        // Réinitialiser tous les pronostics
-        function clearAll() {
-            if (confirm('Supprimer tous les pronostics ?')) {
-                localStorage.removeItem('zeplug_predictions');
-                renderPredictions();
+                if (response.ok) {
+                    predictionInput.value = '';
+                    btn.textContent = '✅ Ajouté !';
+                    // Recharger la liste pour voir son propre message
+                    await loadPredictions();
+                }
+            } catch (error) {
+                console.error("Erreur d'envoi:", error);
+                alert("Oups, l'envoi a échoué.");
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = '🎯 Valider mon pronostic';
+                }, 2000);
             }
         }
 
@@ -352,15 +345,17 @@
             document.getElementById('countdown').textContent = text;
         }
 
-        // Permettre la validation avec Entrée
+        // Gestion de la touche Entrée
         document.getElementById('predictionInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') submitPrediction();
         });
 
-        // Initialisation
-        renderPredictions();
+        // Lancement
         updateCountdown();
+        loadPredictions();
         setInterval(updateCountdown, 60000);
+        // Rafraîchir automatiquement la liste toutes les 30 secondes pour voir les nouveaux votes
+        setInterval(loadPredictions, 30000);
     </script>
 </body>
 </html>
