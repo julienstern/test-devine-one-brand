@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devine le Nouveau Nom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #0b130f;
+            --surface:   #111c15;
+            --surface2:  #172010;
+            --border:    #1f3020;
+            --border2:   #2a4030;
+            --lime:      #b3f000;
+            --lime-dim:  #7ab000;
+            --text:      #e8f0e9;
+            --muted:     #6b8a6e;
+            --accent:    #00e676;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px 60px;
+            background-image:
+                radial-gradient(ellipse 60% 40% at 50% -10%, #0d2b1280 0%, transparent 70%),
+                repeating-linear-gradient(0deg, transparent, transparent 39px, #1a2c1a22 40px),
+                repeating-linear-gradient(90deg, transparent, transparent 39px, #1a2c1a22 40px);
+        }
+
+        .container {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* ---- HEADER ---- */
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0f2a14;
+            border: 1px solid #1e4a22;
+            color: var(--lime);
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 5px 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .tag::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--lime);
+            animation: blink 1.8s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.8rem, 5vw, 2.6rem);
+            font-weight: 800;
+            line-height: 1.1;
+            color: #fff;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        h1 em {
+            font-style: normal;
+            color: var(--lime);
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ---- COUNTDOWN ---- */
+        .countdown-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--lime);
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin: 28px 0 32px;
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+        }
+
+        .countdown-label {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .countdown-value {
+            color: var(--lime);
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        /* ---- FORM ---- */
+        .form-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 28px;
+            margin-bottom: 32px;
+        }
+
+        .form-block-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 18px;
+        }
+
+        .field {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input[type="text"]::placeholder { color: var(--muted); opacity: 0.5; }
+
+        input[type="text"]:focus {
+            border-color: var(--lime-dim);
+            background: #0d1f10;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 6px;
+            background: var(--lime);
+            color: #0a1409;
+            border: none;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+        }
+
+        .submit-btn:hover { background: #c9ff00; }
+        .submit-btn:active { transform: scale(0.99); }
+        .submit-btn:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; }
+
+        /* ---- PREDICTIONS ---- */
+        .predictions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .predictions-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        .count-badge {
+            background: #0f2a14;
+            border: 1px solid #1e4a22;
+            color: var(--lime);
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .predictions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .prediction-item:hover {
+            border-color: var(--border2);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .prediction-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .prediction-meta { text-align: right; }
+
+        .prediction-author {
+            font-size: 13px;
+            color: var(--lime-dim);
+            font-weight: 500;
+        }
+
+        .prediction-time {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+            font-size: 14px;
+            border: 1px dashed var(--border2);
+            border-radius: 8px;
+        }
+
+        /* ---- DIVIDER ---- */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0 0 28px;
+        }
+
+        @media (max-width: 500px) {
+            .form-block { padding: 20px; }
+            h1 { font-size: 1.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="header">
+            <div class="tag">Annonce imminente</div>
+            <h1>Zeplug &amp; ChargeGuru<br>changent de <em>nom</em></h1>
+            <p class="subtitle">Devine le nouveau nom avant la révélation officielle et entre dans l'histoire.</p>
+        </div>
+
+        <div class="countdown-bar">
+            <span class="countdown-label">Révélation dans</span>
+            <span class="countdown-value" id="countdown">...</span>
+        </div>
+
+        <div class="form-block">
+            <div class="form-block-title">Ton pronostic</div>
+
+            <div class="field">
+                <label for="authorInput">Prénom</label>
+                <input type="text" id="authorInput" placeholder="ex. Sophie">
+            </div>
+            <div class="field">
+                <label for="predictionInput">Proposition de nom</label>
+                <input type="text" id="predictionInput" placeholder="ex. VoltGuru, ChargUp…">
+            </div>
+            <button class="submit-btn" id="submitBtn" onclick="submitPrediction()">
+                Valider mon pronostic →
+            </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="predictions-header">
+            <span class="predictions-title">Tous les pronostics</span>
+            <span class="count-badge" id="countBadge">0</span>
+        </div>
+
+        <div class="predictions-list" id="predictionsList">
+            <div class="empty-state">Chargement des pronostics…</div>
+        </div>
+
+    </div>
+
+    <script>
+        const revealDate = new Date('2026-05-26T16:00:00');
+        const API_URL = 'https://sheetdb.io/api/v1/6hurky9ti2e3z';
+
+        async function loadPredictions() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                renderPredictions(data.reverse());
+            } catch (error) {
+                document.getElementById('predictionsList').innerHTML =
+                    '<div class="empty-state">Impossible de charger les pronostics.</div>';
+            }
+        }
+
+        function renderPredictions(predictions) {
+            const list = document.getElementById('predictionsList');
+            const badge = document.getElementById('countBadge');
+
+            badge.textContent = predictions.length;
+
+            if (predictions.length === 0) {
+                list.innerHTML = '<div class="empty-state">Aucun pronostic pour le moment — sois le premier !</div>';
+                return;
+            }
+
+            list.innerHTML = predictions.map(p => `
+                <div class="prediction-item">
+                    <span class="prediction-name">${escapeHtml(p.name)}</span>
+                    <div class="prediction-meta">
+                        <div class="prediction-author">${escapeHtml(p.author)}</div>
+                        <div class="prediction-time">${p.time || ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function submitPrediction() {
+            const authorInput = document.getElementById('authorInput');
+            const predictionInput = document.getElementById('predictionInput');
+            const btn = document.getElementById('submitBtn');
+
+            const author = authorInput.value.trim();
+            const name = predictionInput.value.trim();
+
+            if (!author || !name) {
+                alert('Merci de remplir ton prénom et ta proposition !');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Envoi en cours…';
+
+            const time = new Date().toLocaleString('fr-FR', {
+                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: [{ author, name, time }] })
+                });
+
+                if (response.ok) {
+                    predictionInput.value = '';
+                    btn.textContent = 'Pronostic enregistré ✓';
+                    await loadPredictions();
+                }
+            } catch (error) {
+                alert("Oups, l'envoi a échoué.");
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Valider mon pronostic →';
+                }, 2500);
+            }
+        }
+
+        function updateCountdown() {
+            const diff = revealDate - new Date();
+            if (diff <= 0) {
+                document.getElementById('countdown').textContent = 'L\'annonce est faite !';
+                return;
+            }
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            let t = '';
+            if (d > 0) t += `${d}j `;
+            t += `${h}h ${m}min`;
+            document.getElementById('countdown').textContent = t;
+        }
+
+        document.getElementById('predictionInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') submitPrediction();
+        });
+
+        updateCountdown();
+        loadPredictions();
+        setInterval(updateCountdown, 60000);
+        setInterval(loadPredictions, 30000);
+    </script>
+</body>
+</html>
